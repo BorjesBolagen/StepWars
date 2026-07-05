@@ -69,7 +69,8 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] App-skelett: fyra flikar + utmaningsvy på mockdata
 - [x] Datamodell med RLS och fuskskydd
 - [x] Filmvandringar med delmål (Mordor, Caminon, PCT, Stand by Me, Forrest Gump)
-- [ ] Inloggning (Supabase Auth) + onboarding med hälsodata-behörighet
+- [x] Inloggning (Supabase Auth): konto med namn + födelseår, utloggning, demoläge utan nycklar
+- [ ] Onboarding med hälsodata-behörighet
 - [ ] Steghämtning: HealthKit / Health Connect + bakgrundssynk
 - [ ] Topplistor mot riktig data (realtid)
 - [ ] Utmaningar end-to-end (skapa → bjud in → avgör vinnare)

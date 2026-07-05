@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
 
+import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/use-theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -14,6 +15,13 @@ function tabIcon(active: IoniconName, inactive: IoniconName) {
 
 export default function TabLayout() {
   const colors = useTheme();
+  const { configured, loading, session } = useAuth();
+
+  // Vänta in den sparade sessionen innan vi väljer väg — annars blinkar
+  // inloggningen förbi vid varje appstart.
+  if (loading) return null;
+  if (configured && !session) return <Redirect href="/login" />;
+
   return (
     <Tabs
       screenOptions={{

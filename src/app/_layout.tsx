@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { Colors } from '@/constants/theme';
+import { AuthProvider } from '@/context/auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function RootLayout() {
@@ -22,12 +23,15 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={navTheme}>
-      <StatusBar style={dark ? 'light' : 'dark'} />
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="utmaning/[id]" options={{ title: 'Utmaning', headerBackTitle: 'Tillbaka' }} />
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={navTheme}>
+        <StatusBar style={dark ? 'light' : 'dark'} />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="utmaning/[id]" options={{ title: 'Utmaning', headerBackTitle: 'Tillbaka' }} />
+        </Stack>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
