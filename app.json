@@ -9,10 +9,14 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "se.borjesbolagen.stega"
+      "bundleIdentifier": "se.borjesbolagen.stega",
+      "infoPlist": {
+        "NSMotionUsageDescription": "Stega läser dina steg från telefonens stegräknare för att räkna dem i tävlingar och utmaningar."
+      }
     },
     "android": {
       "package": "se.borjesbolagen.stega",
+      "permissions": ["android.permission.ACTIVITY_RECOGNITION"],
       "adaptiveIcon": {
         "backgroundColor": "#1E4D3B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

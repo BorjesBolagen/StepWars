@@ -70,9 +70,9 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] Datamodell med RLS och fuskskydd
 - [x] Filmvandringar med delmål (Mordor, Caminon, PCT, Stand by Me, Forrest Gump)
 - [x] Inloggning (Supabase Auth): konto med namn + födelseår, utloggning, demoläge utan nycklar
-- [ ] Onboarding med hälsodata-behörighet
-- [ ] Steghämtning: HealthKit / Health Connect + bakgrundssynk
-- [ ] Topplistor mot riktig data (realtid)
+- [x] Steghämtning v1: telefonens stegräknare (iOS, fungerar i Expo Go) + synk av senaste 7 dagarna
+- [x] Topplistor mot riktig data: Alla + åldersgrupp läser leaderboard_weekly
+- [ ] HealthKit / Health Connect i utvecklingsbygge (Android-steg + klockor/andra appar) + bakgrundssynk
 - [ ] Utmaningar end-to-end (skapa → bjud in → avgör vinnare)
 - [ ] Pushnotiser ("Erik gick om dig", pepp, vunnen utmaning)
 - [ ] App-ikon, splash, TestFlight / intern testning

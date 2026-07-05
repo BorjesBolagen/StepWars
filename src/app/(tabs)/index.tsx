@@ -7,6 +7,8 @@ import { ProgressRing } from '@/components/progress-ring';
 import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth';
+import { useSteps } from '@/hooks/use-steps';
 import { useTheme } from '@/hooks/use-theme';
 import { formatKm, formatSteps } from '@/lib/format';
 import { getJourney, journeyPosition } from '@/lib/journeys';
@@ -49,27 +51,34 @@ function challengeSummary(
 
 export default function IdagScreen() {
   const colors = useTheme();
-  const progress = today.steps / today.goal;
+  const { profile } = useAuth();
+  const { steps } = useSteps();
+
+  const firstName = profile?.display_name.split(/\s+/)[0] ?? 'Johan';
+  const goal = profile?.daily_goal ?? today.goal;
+  const progress = steps / goal;
+  // ~0,75 m per steg — grov men rimlig skattning tills hälsodata ger exakt distans.
+  const distanceKm = steps * 0.00075;
 
   return (
     <Screen>
       <View>
         <Eyebrow>{todayLabel()}</Eyebrow>
-        <Title>Hej Johan</Title>
+        <Title>Hej {firstName}</Title>
       </View>
 
       <View style={styles.ringWrap}>
         <ProgressRing progress={progress}>
-          <Num style={styles.ringSteps}>{formatSteps(today.steps)}</Num>
+          <Num style={styles.ringSteps}>{formatSteps(steps)}</Num>
           <Muted>
-            av {formatSteps(today.goal)} steg · {Math.round(progress * 100)} %
+            av {formatSteps(goal)} steg · {Math.round(progress * 100)} %
           </Muted>
         </ProgressRing>
       </View>
 
       <View style={styles.statRow}>
         <Card style={styles.stat}>
-          <Num style={styles.statValue}>{formatKm(today.distanceKm)}</Num>
+          <Num style={styles.statValue}>{formatKm(distanceKm)}</Num>
           <Muted style={styles.statLabel}>km</Muted>
         </Card>
         <Card style={styles.stat}>
