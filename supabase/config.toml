@@ -1,0 +1,6 @@
+# Supabase CLI-konfiguration — krävs för att GitHub-integrationen och
+# `supabase db push` ska känna igen katalogen som ett Supabase-projekt.
+project_id = "stega"
+
+[db]
+major_version = 17
