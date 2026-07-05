@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
@@ -7,38 +8,25 @@ import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
+import { useFriends } from '@/hooks/use-friends';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
 import { today } from '@/lib/mock';
-
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
-function ageGroupOf(birthYear: number): string {
-  const age = new Date().getFullYear() - birthYear;
-  if (age < 18) return 'Under 18';
-  if (age < 25) return '18–24';
-  if (age < 35) return '25–34';
-  if (age < 45) return '35–44';
-  if (age < 55) return '45–54';
-  if (age < 65) return '55–64';
-  return '65+';
-}
+import { ageGroupLabel, ageGroupOf, initialsOf } from '@/lib/people';
 
 export default function ProfilScreen() {
   const colors = useTheme();
   const { configured, session, profile, signOut } = useAuth();
+  const { live, friends, incoming } = useFriends();
 
   const name = profile?.display_name ?? 'Johan Börjesson';
-  const ageGroup = profile ? ageGroupOf(profile.birth_year) : '35–44 år';
+  const ageGroup = profile ? ageGroupLabel(ageGroupOf(profile.birth_year)) : '35–44 år';
   const dailyGoal = profile?.daily_goal ?? today.goal;
+  const friendSummary = !live
+    ? '4 vänner'
+    : incoming.length > 0
+      ? `${incoming.length} ny förfrågan`
+      : `${friends.length} ${friends.length === 1 ? 'vän' : 'vänner'}`;
 
   return (
     <Screen>
@@ -64,6 +52,20 @@ export default function ProfilScreen() {
           {session?.user.email && <Muted style={styles.email}>{session.user.email}</Muted>}
         </View>
       </Card>
+
+      <Eyebrow>Vänner</Eyebrow>
+      <Link href="/vanner" asChild>
+        <Pressable accessibilityRole="button">
+          <Card style={styles.row}>
+            <Ionicons name="people-outline" size={20} color={colors.accent} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Mina vänner</Text>
+            <Muted style={incoming.length > 0 ? { color: colors.accent, fontWeight: '700' } : undefined}>
+              {friendSummary}
+            </Muted>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Card>
+        </Pressable>
+      </Link>
 
       <Eyebrow>Mitt mål</Eyebrow>
       <Card style={styles.row}>

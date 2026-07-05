@@ -29,6 +29,7 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="vanner" options={{ title: 'Vänner', headerBackTitle: 'Tillbaka' }} />
           <Stack.Screen name="utmaning/[id]" options={{ title: 'Utmaning', headerBackTitle: 'Tillbaka' }} />
         </Stack>
       </ThemeProvider>

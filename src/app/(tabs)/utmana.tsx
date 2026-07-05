@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,16 +7,23 @@ import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
+import { useFriends } from '@/hooks/use-friends';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
 import { journeys } from '@/lib/journeys';
-import { challengeKinds, friends, type ChallengeKind } from '@/lib/mock';
+import { challengeKinds, friends as mockFriends, type ChallengeKind, type Person } from '@/lib/mock';
+import { toPerson } from '@/lib/people';
 
 export default function UtmanaScreen() {
   const colors = useTheme();
+  const { live, friends: realFriends } = useFriends();
   const [kind, setKind] = useState<ChallengeKind>('most_steps');
   const [journeyId, setJourneyId] = useState<string>('mordor');
-  const [selected, setSelected] = useState<Set<string>>(new Set(['erik']));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const friends: Person[] = live
+    ? realFriends.map((friend, index) => toPerson(friend.id, friend.display_name, index))
+    : mockFriends;
 
   const toggleFriend = (id: string) => {
     setSelected((prev) => {
@@ -99,6 +107,25 @@ export default function UtmanaScreen() {
       )}
 
       <Eyebrow>Utmana vem?</Eyebrow>
+      {live && friends.length === 0 && (
+        <Card style={styles.noFriends}>
+          <Muted style={styles.noFriendsText}>
+            Du har inga vänner att utmana ännu.
+          </Muted>
+          <Link href="/vanner" asChild>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.noFriendsButton,
+                { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+              ]}>
+              <Text style={[styles.noFriendsButtonText, { color: colors.onAccent }]}>
+                Lägg till vänner
+              </Text>
+            </Pressable>
+          </Link>
+        </Card>
+      )}
       <View style={styles.friends}>
         {friends.map((friend) => {
           const isSelected = selected.has(friend.id);
@@ -183,6 +210,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  noFriends: {
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+  },
+  noFriendsText: {
+    fontSize: 13,
+  },
+  noFriendsButton: {
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  noFriendsButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
   friends: {
     flexDirection: 'row',

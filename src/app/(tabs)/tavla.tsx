@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import { Spacing } from '@/constants/theme';
 import { useLeaderboard, type Scope } from '@/hooks/use-leaderboard';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
+import { ageGroupLabel } from '@/lib/people';
 
 type Period = 'idag' | 'vecka' | 'manad';
 
@@ -45,10 +47,7 @@ export default function TavlaScreen() {
 
   const scopes: { value: Scope; label: string }[] = [
     { value: 'alla', label: 'Alla' },
-    {
-      value: 'aldersgrupp',
-      label: myAgeGroup ? (myAgeGroup === 'Under 18' || myAgeGroup === '65+' ? myAgeGroup : `${myAgeGroup} år`) : '35–44 år',
-    },
+    { value: 'aldersgrupp', label: myAgeGroup ? ageGroupLabel(myAgeGroup) : '35–44 år' },
     { value: 'vanner', label: 'Vänner' },
   ];
 
@@ -104,9 +103,23 @@ export default function TavlaScreen() {
           </Text>
           <Muted style={styles.emptyText}>
             {scope === 'vanner'
-              ? 'Utmana någon via Utmana-fliken så dyker de upp här.'
+              ? 'Lägg till vänner så tävlar ni här varje vecka.'
               : 'Öppna appen på telefonen så synkas dina steg — topplistan fylls på allteftersom.'}
           </Muted>
+          {scope === 'vanner' && (
+            <Link href="/vanner" asChild>
+              <Pressable
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.emptyButton,
+                  { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+                ]}>
+                <Text style={[styles.emptyButtonText, { color: colors.onAccent }]}>
+                  Lägg till vänner
+                </Text>
+              </Pressable>
+            </Link>
+          )}
         </Card>
       ) : (
         <View style={styles.list}>
@@ -169,6 +182,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     maxWidth: 280,
+  },
+  emptyButton: {
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    marginTop: Spacing.two,
+  },
+  emptyButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
   list: {
     gap: Spacing.two,
