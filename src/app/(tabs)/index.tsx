@@ -9,6 +9,7 @@ import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatKm, formatSteps } from '@/lib/format';
+import { getJourney, journeyPosition } from '@/lib/journeys';
 import { challenges, me, today } from '@/lib/mock';
 
 const WEEKDAYS = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
@@ -20,6 +21,30 @@ const MONTHS = [
 function todayLabel(): string {
   const now = new Date();
   return `${WEEKDAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+}
+
+function challengeSummary(
+  challenge: (typeof challenges)[number],
+  mySteps: number,
+  lead: number,
+  myRank: number,
+): string {
+  if (challenge.kind === 'journey' && challenge.journeyId) {
+    const journey = getJourney(challenge.journeyId);
+    if (journey) {
+      const { next, done } = journeyPosition(journey, mySteps);
+      return done
+        ? 'Framme! Du har gått hela vägen'
+        : `Nästa delmål: ${next!.name} · ${formatSteps(next!.steps - mySteps)} steg kvar`;
+    }
+  }
+  if (challenge.kind === 'first_to_goal') {
+    return lead >= 0
+      ? `Du leder med ${formatSteps(lead)} steg`
+      : `Du ligger ${formatSteps(-lead)} steg efter`;
+  }
+  const daysLeft = challenge.daysLeft != null ? ` · ${challenge.daysLeft} dagar kvar` : '';
+  return `${myRank}:a av ${challenge.standings.length}${daysLeft}`;
 }
 
 export default function IdagScreen() {
@@ -82,13 +107,7 @@ export default function IdagScreen() {
                   }
                   tone={challenge.kind === 'first_to_goal' ? 'accent' : 'primary'}
                 />
-                <Muted>
-                  {challenge.kind === 'first_to_goal'
-                    ? lead >= 0
-                      ? `Du leder med ${formatSteps(lead)} steg`
-                      : `Du ligger ${formatSteps(-lead)} steg efter`
-                    : `${myRank}:a av ${challenge.standings.length}${challenge.daysLeft != null ? ` · ${challenge.daysLeft} dagar kvar` : ''}`}
-                </Muted>
+                <Muted>{challengeSummary(challenge, mine?.steps ?? 0, lead, myRank)}</Muted>
               </Card>
             </Pressable>
           </Link>

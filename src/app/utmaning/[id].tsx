@@ -6,8 +6,11 @@ import { ProgressBar } from '@/components/progress-bar';
 import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
+import { getJourney, journeyPosition } from '@/lib/journeys';
 import { challenges, me, today } from '@/lib/mock';
 
 export default function UtmaningScreen() {
@@ -25,6 +28,9 @@ export default function UtmaningScreen() {
   const avgPerDay = mine ? Math.round(mine.steps / Math.max(challenge.daysElapsed, 1)) : 0;
   const daysToGoal =
     goal && mine && avgPerDay > 0 ? Math.ceil((goal - mine.steps) / avgPerDay) : null;
+
+  const journey = challenge.journeyId ? getJourney(challenge.journeyId) : undefined;
+  const position = journey && mine ? journeyPosition(journey, mine.steps) : undefined;
 
   return (
     <Screen>
@@ -73,6 +79,47 @@ export default function UtmaningScreen() {
         Idag: Du +{formatSteps(today.steps)}
         {rivals.length === 1 ? ` · ${bestRival.person.name.split(' ')[0]} +${formatSteps(7902)}` : ''}
       </Muted>
+
+      {journey && position && mine && (
+        <>
+          <Eyebrow>Delmål · {journey.film}</Eyebrow>
+          <Card style={styles.milestones}>
+            {journey.milestones.map((milestone) => {
+              const isReached = milestone.steps <= mine.steps;
+              const isNext = position.next?.name === milestone.name;
+              return (
+                <View key={milestone.name} style={styles.milestoneRow}>
+                  <Ionicons
+                    name={isReached ? 'checkmark-circle' : isNext ? 'walk' : 'ellipse-outline'}
+                    size={18}
+                    color={isReached ? colors.accent : isNext ? colors.primary : colors.border}
+                  />
+                  <Text
+                    style={[
+                      styles.milestoneName,
+                      { color: isReached || isNext ? colors.text : colors.textSecondary },
+                      isNext && styles.milestoneNext,
+                    ]}>
+                    {milestone.name}
+                  </Text>
+                  <Num
+                    style={[
+                      styles.milestoneSteps,
+                      { color: isReached ? colors.accent : colors.textSecondary },
+                    ]}>
+                    {formatSteps(milestone.steps)}
+                  </Num>
+                </View>
+              );
+            })}
+            {position.next && (
+              <Muted style={styles.milestoneNote}>
+                {formatSteps(position.next.steps - mine.steps)} steg kvar till {position.next.name}
+              </Muted>
+            )}
+          </Card>
+        </>
+      )}
 
       {goal != null && (
         <Card style={styles.goalCard}>
@@ -146,6 +193,31 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     gap: Spacing.two,
+  },
+  milestones: {
+    gap: Spacing.two + 2,
+  },
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two + 2,
+  },
+  milestoneName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  milestoneNext: {
+    fontWeight: '800',
+  },
+  milestoneSteps: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  milestoneNote: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   tag: {
     borderRadius: 999,

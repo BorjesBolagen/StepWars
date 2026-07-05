@@ -7,11 +7,14 @@ import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatSteps } from '@/lib/format';
+import { journeys } from '@/lib/journeys';
 import { challengeKinds, friends, type ChallengeKind } from '@/lib/mock';
 
 export default function UtmanaScreen() {
   const colors = useTheme();
   const [kind, setKind] = useState<ChallengeKind>('most_steps');
+  const [journeyId, setJourneyId] = useState<string>('mordor');
   const [selected, setSelected] = useState<Set<string>>(new Set(['erik']));
 
   const toggleFriend = (id: string) => {
@@ -65,6 +68,35 @@ export default function UtmanaScreen() {
           );
         })}
       </View>
+
+      {kind === 'journey' && (
+        <>
+          <Eyebrow>Välj vandring</Eyebrow>
+          <View style={styles.kinds}>
+            {journeys.map((journey) => {
+              const active = journey.id === journeyId;
+              return (
+                <Pressable
+                  key={journey.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: active }}
+                  onPress={() => setJourneyId(journey.id)}>
+                  <Card highlighted={active} style={styles.journeyCard}>
+                    <View style={styles.journeyHead}>
+                      <Text style={[styles.kindTitle, { color: colors.text }]}>{journey.title}</Text>
+                      <Muted style={styles.journeyFilm}>{journey.film}</Muted>
+                    </View>
+                    <Muted style={styles.kindDescription}>{journey.description}</Muted>
+                    <Muted style={[styles.journeyMeta, { color: colors.accent }]}>
+                      {formatSteps(journey.totalSteps)} steg · {journey.milestones.length - 1} delmål
+                    </Muted>
+                  </Card>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      )}
 
       <Eyebrow>Utmana vem?</Eyebrow>
       <View style={styles.friends}>
@@ -133,6 +165,23 @@ const styles = StyleSheet.create({
   },
   kindDescription: {
     fontSize: 12,
+    fontVariant: ['tabular-nums'],
+  },
+  journeyCard: {
+    gap: Spacing.one,
+  },
+  journeyHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: Spacing.two,
+  },
+  journeyFilm: {
+    fontSize: 11,
+  },
+  journeyMeta: {
+    fontSize: 12,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   friends: {

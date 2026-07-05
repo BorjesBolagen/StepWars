@@ -1,8 +1,9 @@
 # Stega 👟
 
 Tävla med dina steg — mot alla, mot din åldersgrupp eller genom att utmana
-vänner: flest steg under en period, först till målet, eller längsta svit av
-klarade dagsmål.
+vänner: flest steg under en period, först till målet, längsta svit av
+klarade dagsmål — eller en filmvandring, som Vägen till Mordor med filmens
+platser som delmål.
 
 **Status:** grundskelett. Alla fyra flikar och utmaningsvyn är byggda enligt
 [designkonceptet](docs/design.md) och kör på mockdata. Nästa steg är
@@ -67,6 +68,7 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] Designkoncept och tokens
 - [x] App-skelett: fyra flikar + utmaningsvy på mockdata
 - [x] Datamodell med RLS och fuskskydd
+- [x] Filmvandringar med delmål (Mordor, Caminon, PCT, Stand by Me, Forrest Gump)
 - [ ] Inloggning (Supabase Auth) + onboarding med hälsodata-behörighet
 - [ ] Steghämtning: HealthKit / Health Connect + bakgrundssynk
 - [ ] Topplistor mot riktig data (realtid)

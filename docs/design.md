@@ -48,8 +48,27 @@ Fyra flikar, fyra jobb:
 | ---- | ---- |
 | **Idag** | Hur går det idag? Dagsring, statistik, aktiva utmaningar |
 | **Tävla** | Topplistorna — Alla / åldersgrupp / Vänner × Idag / Vecka / Månad |
-| **Utmana** | Skapa utmaning: Flest steg · Först till målet · Dagligt mål |
+| **Utmana** | Skapa utmaning: Flest steg · Först till målet · Dagligt mål · Filmvandring |
 | **Profil** | Dagsmål, datakällor, konto |
+
+### Filmvandringar
+
+Kända promenader ur filmhistorien som utmaningsbanor — vännerna tävlar om
+vem som går hela sträckan först, med filmens platser som delmål som prickas
+av på vägen. Katalogen spänner från en helg till ett livsprojekt:
+
+| Vandring | Film | Steg (estimat) |
+| -------- | ---- | -------------- |
+| Längs rälsen | Stand by Me | 52 000 |
+| Caminon | The Way | 1 014 000 |
+| Pacific Crest Trail | Wild | 2 301 000 |
+| **Vägen till Mordor** | Sagan om ringen | 3 722 000 |
+| Springturnén | Forrest Gump | 31 900 000 |
+
+Mordor-sträckan bygger på fansens klassiska beräkning att Fylke →
+Domedagsberget är 1 779 miles (≈ 2 863 km); delmålen är filmens platser —
+Bri, Vattnadal, Morias gruvor, Lothlórien, Rauros fall, Svarta porten.
+Övriga estimat: sträckan i km × ~1 300 steg/km.
 
 Pågående utmaningar öppnas som egen skärm (`utmaning/[id]`) med
 banor-mot-mållinjen-visualisering och prognos ("framme om ca 3 dagar").

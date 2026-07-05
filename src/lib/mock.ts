@@ -17,7 +17,7 @@ export type LeaderboardEntry = {
   avgPerDay: number;
 };
 
-export type ChallengeKind = 'most_steps' | 'first_to_goal' | 'daily_goal_streak';
+export type ChallengeKind = 'most_steps' | 'first_to_goal' | 'daily_goal_streak' | 'journey';
 
 export type Challenge = {
   id: string;
@@ -25,6 +25,8 @@ export type Challenge = {
   title: string;
   tag: string;
   goalSteps?: number;
+  /** Sätt för kind 'journey' — pekar på en filmvandring i src/lib/journeys.ts. */
+  journeyId?: string;
   daysElapsed: number;
   daysLeft?: number;
   standings: { person: Person; steps: number }[];
@@ -75,6 +77,20 @@ export const leaderboards: Record<'alla' | 'aldersgrupp' | 'vanner', Leaderboard
 
 export const challenges: Challenge[] = [
   {
+    id: 'mordor',
+    kind: 'journey',
+    title: 'Vägen till Mordor',
+    tag: 'Filmvandring',
+    goalSteps: 3722000,
+    journeyId: 'mordor',
+    daysElapsed: 31,
+    standings: [
+      { person: anna, steps: 305412 },
+      { person: me, steps: 291208 },
+      { person: erik, steps: 262019 },
+    ],
+  },
+  {
     id: 'duel-erik',
     kind: 'first_to_goal',
     title: 'Du mot Erik',
@@ -112,5 +128,10 @@ export const challengeKinds: { kind: ChallengeKind; title: string; description: 
     kind: 'daily_goal_streak',
     title: 'Dagligt mål',
     description: 'Klara 8 000 steg om dagen — längsta sviten vinner.',
+  },
+  {
+    kind: 'journey',
+    title: 'Filmvandring',
+    description: 'Gå en berömd filmpromenad — först till slutet vinner, delmål på vägen.',
   },
 ];
