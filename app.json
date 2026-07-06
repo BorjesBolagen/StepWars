@@ -16,7 +16,10 @@
     },
     "android": {
       "package": "se.borjesbolagen.stega",
-      "permissions": ["android.permission.ACTIVITY_RECOGNITION"],
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.health.READ_STEPS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#1E4D3B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -37,6 +40,15 @@
           "backgroundColor": "#1E4D3B",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
         }
       ]
     ],
