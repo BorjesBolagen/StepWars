@@ -32,6 +32,14 @@ function challengeSummary(
   lead: number,
   myRank: number,
 ): string {
+  if (challenge.finished) {
+    const winner = challenge.standings.find((s) => s.person.id === challenge.winnerId);
+    return winner
+      ? winner.person.name === 'Du'
+        ? '🏆 Du vann!'
+        : `🏆 ${winner.person.name.split(' ')[0]} vann`
+      : 'Avgjord';
+  }
   if (challenge.myStatus === 'invited') {
     return 'Du är inbjuden — tryck för att svara';
   }

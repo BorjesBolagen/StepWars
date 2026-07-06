@@ -74,7 +74,7 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] Topplistor mot riktig data: Alla + åldersgrupp läser leaderboard_weekly
 - [x] Vänsystem: sök på namn, skicka/acceptera förfrågningar, Vänner-liga i Tävla
 - [x] Utmaningar end-to-end: skapa i Utmana, bjud in vänner, anta/tacka nej, ställning på riktiga steg
+- [x] Vinnaravgörande: pg_cron avgör utmaningar var 15:e minut, vinnaren visas i appen
+- [x] Pushnotiser via pg_net + Expo push: utmanad, vänförfrågan, accepterad vän, pepp, vinst
 - [ ] HealthKit / Health Connect i utvecklingsbygge (Android-steg + klockor/andra appar) + bakgrundssynk
-- [ ] Vinnaravgörande vid mål/tidsslut (Edge Function + notis)
-- [ ] Pushnotiser ("Erik gick om dig", pepp, vunnen utmaning)
 - [ ] App-ikon, splash, TestFlight / intern testning

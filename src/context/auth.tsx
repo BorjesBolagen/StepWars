@@ -70,6 +70,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .then(({ data }) => {
         if (!cancelled) setProfile(data);
       });
+    // Dynamisk import: expo-notifications ska inte dras in vid statisk
+    // webbrendering — modulen laddas först på en riktig enhet.
+    import('@/lib/notifications').then(({ registerForPush }) => {
+      if (!cancelled) registerForPush(session.user.id);
+    });
     return () => {
       cancelled = true;
     };

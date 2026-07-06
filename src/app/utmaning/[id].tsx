@@ -13,6 +13,7 @@ import { useSteps } from '@/hooks/use-steps';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
 import { getJourney, journeyPosition } from '@/lib/journeys';
+import { supabase } from '@/lib/supabase';
 
 export default function UtmaningScreen() {
   const colors = useTheme();
@@ -67,11 +68,30 @@ export default function UtmaningScreen() {
   const journey = challenge.journeyId ? getJourney(challenge.journeyId) : undefined;
   const position = journey && mine ? journeyPosition(journey, mine.steps) : undefined;
 
-  const invited = challenge.myStatus === 'invited';
+  const invited = challenge.myStatus === 'invited' && !challenge.finished;
+  const winnerStanding = challenge.finished
+    ? challenge.standings.find((s) => s.person.id === challenge.winnerId)
+    : undefined;
 
   const answer = async (accept: boolean) => {
     await respond(challenge.id, accept);
     if (!accept) router.back();
+  };
+
+  const sendNudge = async () => {
+    if (!live || !session || !supabase || !bestRival) {
+      Alert.alert('Demoläge', 'Logga in för att peppa på riktigt.');
+      return;
+    }
+    const { error } = await supabase.from('nudges').insert({
+      challenge_id: challenge.id,
+      from_user: session.user.id,
+      to_user: bestRival.person.id,
+    });
+    Alert.alert(
+      error ? 'Hoppsan' : 'Skickat! 📣',
+      error ? error.message : `Peppen är på väg till ${rivalFirstName}.`,
+    );
   };
 
   return (
@@ -111,19 +131,36 @@ export default function UtmaningScreen() {
         </Card>
       )}
 
-      {bestRival && (
-        <View style={[styles.leadBanner, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.leadText, { color: colors.onPrimary }]}>
-            {lead >= 0
-              ? `Du leder med ${formatValue(lead)}`
-              : `${rivalFirstName} leder med ${formatValue(-lead)}`}
+      {challenge.finished ? (
+        <View style={[styles.leadBanner, { backgroundColor: colors.accent }]}>
+          <Text style={[styles.leadText, { color: colors.onAccent }]}>
+            {winnerStanding
+              ? winnerStanding.person.name === 'Du'
+                ? '🏆 Du vann!'
+                : `🏆 ${winnerStanding.person.name.split(' ')[0]} vann`
+              : 'Utmaningen är avgjord'}
           </Text>
-          <Text style={[styles.leadSub, { color: colors.onPrimary }]}>
-            {lead >= 0
-              ? `${rivalFirstName} behöver en långpromenad ikväll för att komma ikapp`
-              : 'En kvällspromenad kan vända läget'}
+          <Text style={[styles.leadSub, { color: colors.onAccent }]}>
+            {winnerStanding?.person.name === 'Du'
+              ? 'Snyggt gånget — dags att utmana igen?'
+              : 'Revansch? Skapa en ny utmaning i Utmana-fliken.'}
           </Text>
         </View>
+      ) : (
+        bestRival && (
+          <View style={[styles.leadBanner, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.leadText, { color: colors.onPrimary }]}>
+              {lead >= 0
+                ? `Du leder med ${formatValue(lead)}`
+                : `${rivalFirstName} leder med ${formatValue(-lead)}`}
+            </Text>
+            <Text style={[styles.leadSub, { color: colors.onPrimary }]}>
+              {lead >= 0
+                ? `${rivalFirstName} behöver en långpromenad ikväll för att komma ikapp`
+                : 'En kvällspromenad kan vända läget'}
+            </Text>
+          </View>
+        )
       )}
 
       <View style={styles.lanes}>
@@ -227,13 +264,10 @@ export default function UtmaningScreen() {
         </Card>
       )}
 
-      {!invited && bestRival && (
+      {!invited && !challenge.finished && bestRival && (
         <Pressable
           accessibilityRole="button"
-          onPress={() =>
-            // TODO: skicka pushnotis via backend när notiser är byggda.
-            Alert.alert('Snart!', 'Peppen skickas via pushnotiser när notiser är byggda.')
-          }
+          onPress={sendNudge}
           style={({ pressed }) => [
             styles.cta,
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },

@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 
 export type LiveChallenge = Challenge & {
   myStatus: 'invited' | 'accepted';
+  finished: boolean;
+  winnerId?: string;
 };
 
 type ChallengeRow = {
@@ -19,6 +21,8 @@ type ChallengeRow = {
   journey_id: string | null;
   starts_on: string;
   ends_on: string | null;
+  status: string;
+  winner: string | null;
 };
 
 function tagFor(row: ChallengeRow): string {
@@ -49,7 +53,7 @@ export function useChallenges() {
   const live = configured && session != null;
 
   const [challenges, setChallenges] = useState<LiveChallenge[]>(
-    mockChallenges.map((challenge) => ({ ...challenge, myStatus: 'accepted' })),
+    mockChallenges.map((challenge) => ({ ...challenge, myStatus: 'accepted', finished: false })),
   );
   const [loading, setLoading] = useState(live);
 
@@ -76,9 +80,9 @@ export function useChallenges() {
     const [{ data: rows }, { data: participants }] = await Promise.all([
       supabase
         .from('challenges')
-        .select('id, kind, title, goal_steps, journey_id, starts_on, ends_on')
+        .select('id, kind, title, goal_steps, journey_id, starts_on, ends_on, status, winner')
         .in('id', challengeIds)
-        .eq('status', 'active')
+        .in('status', ['active', 'finished'])
         .order('created_at', { ascending: false }),
       supabase
         .from('challenge_participants')
@@ -140,6 +144,8 @@ export function useChallenges() {
             : undefined,
         standings,
         myStatus: myStatusById.get(row.id) as 'invited' | 'accepted',
+        finished: row.status === 'finished',
+        winnerId: row.winner ?? undefined,
       };
     });
 
