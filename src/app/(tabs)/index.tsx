@@ -8,11 +8,12 @@ import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
+import { useChallenges, type LiveChallenge } from '@/hooks/use-challenges';
 import { useSteps } from '@/hooks/use-steps';
 import { useTheme } from '@/hooks/use-theme';
 import { formatKm, formatSteps } from '@/lib/format';
 import { getJourney, journeyPosition } from '@/lib/journeys';
-import { challenges, me, today } from '@/lib/mock';
+import { today } from '@/lib/mock';
 
 const WEEKDAYS = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
 const MONTHS = [
@@ -26,11 +27,17 @@ function todayLabel(): string {
 }
 
 function challengeSummary(
-  challenge: (typeof challenges)[number],
+  challenge: LiveChallenge,
   mySteps: number,
   lead: number,
   myRank: number,
 ): string {
+  if (challenge.myStatus === 'invited') {
+    return 'Du är inbjuden — tryck för att svara';
+  }
+  if (challenge.kind === 'daily_goal_streak') {
+    return `${mySteps} ${mySteps === 1 ? 'dag' : 'dagar'} klarade${challenge.daysLeft != null ? ` · ${challenge.daysLeft} dagar kvar` : ''}`;
+  }
   if (challenge.kind === 'journey' && challenge.journeyId) {
     const journey = getJourney(challenge.journeyId);
     if (journey) {
@@ -51,8 +58,10 @@ function challengeSummary(
 
 export default function IdagScreen() {
   const colors = useTheme();
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { steps } = useSteps();
+  const { challenges, live } = useChallenges();
+  const myId = live && session ? session.user.id : 'me';
 
   const firstName = profile?.display_name.split(/\s+/)[0] ?? 'Johan';
   const goal = profile?.daily_goal ?? today.goal;
@@ -92,11 +101,19 @@ export default function IdagScreen() {
       </View>
 
       <Eyebrow>Dina utmaningar</Eyebrow>
+      {challenges.length === 0 && (
+        <Card style={styles.challengeCard}>
+          <Muted>Inga utmaningar ännu — skapa en i Utmana-fliken!</Muted>
+        </Card>
+      )}
       {challenges.map((challenge) => {
-        const mine = challenge.standings.find((s) => s.person.id === me.id);
-        const leaderSteps = Math.max(...challenge.standings.map((s) => s.steps));
-        const myRank = challenge.standings.findIndex((s) => s.person.id === me.id) + 1;
-        const lead = mine ? mine.steps - Math.max(...challenge.standings.filter((s) => s.person.id !== me.id).map((s) => s.steps)) : 0;
+        const mine = challenge.standings.find((s) => s.person.id === myId);
+        const leaderSteps = Math.max(1, ...challenge.standings.map((s) => s.steps));
+        const myRank = challenge.standings.findIndex((s) => s.person.id === myId) + 1;
+        const rivalSteps = challenge.standings
+          .filter((s) => s.person.id !== myId)
+          .map((s) => s.steps);
+        const lead = mine && rivalSteps.length > 0 ? mine.steps - Math.max(...rivalSteps) : 0;
 
         return (
           <Link key={challenge.id} href={{ pathname: '/utmaning/[id]', params: { id: challenge.id } }} asChild>

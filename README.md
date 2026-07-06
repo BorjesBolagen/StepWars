@@ -73,7 +73,8 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] Steghämtning v1: telefonens stegräknare (iOS, fungerar i Expo Go) + synk av senaste 7 dagarna
 - [x] Topplistor mot riktig data: Alla + åldersgrupp läser leaderboard_weekly
 - [x] Vänsystem: sök på namn, skicka/acceptera förfrågningar, Vänner-liga i Tävla
+- [x] Utmaningar end-to-end: skapa i Utmana, bjud in vänner, anta/tacka nej, ställning på riktiga steg
 - [ ] HealthKit / Health Connect i utvecklingsbygge (Android-steg + klockor/andra appar) + bakgrundssynk
-- [ ] Utmaningar end-to-end (skapa → bjud in → avgör vinnare)
+- [ ] Vinnaravgörande vid mål/tidsslut (Edge Function + notis)
 - [ ] Pushnotiser ("Erik gick om dig", pepp, vunnen utmaning)
 - [ ] App-ikon, splash, TestFlight / intern testning

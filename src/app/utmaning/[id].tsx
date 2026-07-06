@@ -1,36 +1,78 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { ProgressBar } from '@/components/progress-bar';
 import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Num, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-
+import { useAuth } from '@/context/auth';
+import { useChallenges } from '@/hooks/use-challenges';
+import { useSteps } from '@/hooks/use-steps';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
 import { getJourney, journeyPosition } from '@/lib/journeys';
-import { challenges, me, today } from '@/lib/mock';
 
 export default function UtmaningScreen() {
   const colors = useTheme();
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const challenge = challenges.find((c) => c.id === id) ?? challenges[0];
+  const { session } = useAuth();
+  const { live, loading, challenges, respond } = useChallenges();
+  const { steps: todaySteps } = useSteps();
+
+  const myId = live && session ? session.user.id : 'me';
+  const challenge = challenges.find((c) => c.id === id);
+
+  if (loading && !challenge) {
+    return (
+      <Screen>
+        <ActivityIndicator color={colors.accent} style={styles.loading} />
+      </Screen>
+    );
+  }
+  if (!challenge) {
+    return (
+      <Screen>
+        <Stack.Screen options={{ title: 'Utmaning' }} />
+        <Card style={styles.notFound}>
+          <Muted>Utmaningen hittades inte — den kan ha avslutats.</Muted>
+        </Card>
+      </Screen>
+    );
+  }
+
+  const isStreak = challenge.kind === 'daily_goal_streak';
+  const formatValue = (value: number) =>
+    isStreak ? `${value} ${value === 1 ? 'dag' : 'dagar'}` : formatSteps(value);
 
   const sorted = [...challenge.standings].sort((a, b) => b.steps - a.steps);
-  const mine = challenge.standings.find((s) => s.person.id === me.id);
-  const rivals = challenge.standings.filter((s) => s.person.id !== me.id);
-  const bestRival = rivals.reduce((best, s) => (s.steps > best.steps ? s : best), rivals[0]);
-  const lead = (mine?.steps ?? 0) - bestRival.steps;
+  const mine = challenge.standings.find((s) => s.person.id === myId);
+  const rivals = challenge.standings.filter((s) => s.person.id !== myId);
+  const bestRival =
+    rivals.length > 0
+      ? rivals.reduce((best, s) => (s.steps > best.steps ? s : best), rivals[0])
+      : null;
+  const lead = bestRival ? (mine?.steps ?? 0) - bestRival.steps : 0;
+  const rivalFirstName = bestRival?.person.name.split(' ')[0] ?? '';
 
   const goal = challenge.goalSteps;
   const avgPerDay = mine ? Math.round(mine.steps / Math.max(challenge.daysElapsed, 1)) : 0;
   const daysToGoal =
-    goal && mine && avgPerDay > 0 ? Math.ceil((goal - mine.steps) / avgPerDay) : null;
+    !isStreak && goal && mine && avgPerDay > 0
+      ? Math.ceil((goal - mine.steps) / avgPerDay)
+      : null;
 
   const journey = challenge.journeyId ? getJourney(challenge.journeyId) : undefined;
   const position = journey && mine ? journeyPosition(journey, mine.steps) : undefined;
+
+  const invited = challenge.myStatus === 'invited';
+
+  const answer = async (accept: boolean) => {
+    await respond(challenge.id, accept);
+    if (!accept) router.back();
+  };
 
   return (
     <Screen>
@@ -42,23 +84,54 @@ export default function UtmaningScreen() {
         <Title>{challenge.title}</Title>
       </View>
 
-      <View style={[styles.leadBanner, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.leadText, { color: colors.onPrimary }]}>
-          {lead >= 0
-            ? `Du leder med ${formatSteps(lead)} steg`
-            : `${bestRival.person.name.split(' ')[0]} leder med ${formatSteps(-lead)} steg`}
-        </Text>
-        <Text style={[styles.leadSub, { color: colors.onPrimary }]}>
-          {lead >= 0
-            ? `${bestRival.person.name.split(' ')[0]} behöver en långpromenad ikväll för att komma ikapp`
-            : 'En kvällspromenad kan vända läget'}
-        </Text>
-      </View>
+      {invited && (
+        <Card style={styles.inviteCard} highlighted>
+          <Text style={[styles.inviteTitle, { color: colors.text }]}>Du är utmanad!</Text>
+          <Muted style={styles.inviteText}>Antar du utmaningen?</Muted>
+          <View style={styles.inviteButtons}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => answer(true)}
+              style={({ pressed }) => [
+                styles.inviteButton,
+                { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+              ]}>
+              <Text style={[styles.inviteButtonText, { color: colors.onAccent }]}>Anta utmaningen</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => answer(false)}
+              style={({ pressed }) => [
+                styles.inviteButton,
+                { borderWidth: 1, borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
+              ]}>
+              <Text style={[styles.inviteButtonText, { color: colors.textSecondary }]}>Tacka nej</Text>
+            </Pressable>
+          </View>
+        </Card>
+      )}
+
+      {bestRival && (
+        <View style={[styles.leadBanner, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.leadText, { color: colors.onPrimary }]}>
+            {lead >= 0
+              ? `Du leder med ${formatValue(lead)}`
+              : `${rivalFirstName} leder med ${formatValue(-lead)}`}
+          </Text>
+          <Text style={[styles.leadSub, { color: colors.onPrimary }]}>
+            {lead >= 0
+              ? `${rivalFirstName} behöver en långpromenad ikväll för att komma ikapp`
+              : 'En kvällspromenad kan vända läget'}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.lanes}>
         {sorted.map((standing) => {
-          const isMe = standing.person.id === me.id;
-          const max = goal ?? sorted[0].steps;
+          const isMe = standing.person.id === myId;
+          const max = isStreak
+            ? Math.max(challenge.daysElapsed, 1)
+            : (goal ?? Math.max(sorted[0].steps, 1));
           return (
             <Card key={standing.person.id} style={styles.lane}>
               <View style={styles.laneTop}>
@@ -66,19 +139,21 @@ export default function UtmaningScreen() {
                   {isMe ? 'Du' : standing.person.name.split(' ')[0]}
                 </Text>
                 <Num style={{ color: isMe ? colors.accent : colors.primary, fontSize: 15 }}>
-                  {formatSteps(standing.steps)}
+                  {formatValue(standing.steps)}
                 </Num>
               </View>
-              <ProgressBar progress={standing.steps / max} tone={isMe ? 'accent' : 'primary'} />
+              <ProgressBar
+                progress={max > 0 ? standing.steps / max : 0}
+                tone={isMe ? 'accent' : 'primary'}
+              />
             </Card>
           );
         })}
       </View>
 
-      <Muted style={styles.dayLog}>
-        Idag: Du +{formatSteps(today.steps)}
-        {rivals.length === 1 ? ` · ${bestRival.person.name.split(' ')[0]} +${formatSteps(7902)}` : ''}
-      </Muted>
+      {!isStreak && (
+        <Muted style={styles.dayLog}>Idag: Du +{formatSteps(todaySteps)}</Muted>
+      )}
 
       {journey && position && mine && (
         <>
@@ -121,7 +196,7 @@ export default function UtmaningScreen() {
         </>
       )}
 
-      {goal != null && (
+      {goal != null && !isStreak && (
         <Card style={styles.goalCard}>
           <View style={styles.laneTop}>
             <Text style={[styles.laneName, { color: colors.text }]}>Målgång</Text>
@@ -129,33 +204,82 @@ export default function UtmaningScreen() {
               <Num style={[styles.tagText, { color: colors.accent }]}>{formatSteps(goal)} steg</Num>
             </View>
           </View>
-          {daysToGoal != null && (
+          {daysToGoal != null && daysToGoal > 0 && (
             <Muted>
-              I din takt ({formatSteps(avgPerDay)}/dag) är du framme om ca {daysToGoal} dagar
+              I din takt ({formatSteps(avgPerDay)}/dag) är du framme om ca {daysToGoal}{' '}
+              {daysToGoal === 1 ? 'dag' : 'dagar'}
             </Muted>
           )}
         </Card>
       )}
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() =>
-          // TODO: skicka pushnotis via backend när notiser är byggda.
-          Alert.alert('Snart!', 'Peppen skickas via pushnotiser när backend är inkopplad.')
-        }
-        style={({ pressed }) => [
-          styles.cta,
-          { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-        ]}>
-        <Text style={[styles.ctaText, { color: colors.onPrimary }]}>
-          Skicka en pepp till {bestRival.person.name.split(' ')[0]}
-        </Text>
-      </Pressable>
+      {isStreak && goal != null && (
+        <Card style={styles.goalCard}>
+          <View style={styles.laneTop}>
+            <Text style={[styles.laneName, { color: colors.text }]}>Regeln</Text>
+            <View style={[styles.tag, { backgroundColor: colors.accentSoft }]}>
+              <Num style={[styles.tagText, { color: colors.accent }]}>
+                {formatSteps(goal)} steg/dag
+              </Num>
+            </View>
+          </View>
+          <Muted>Flest klarade dagar när tiden är slut vinner.</Muted>
+        </Card>
+      )}
+
+      {!invited && bestRival && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            // TODO: skicka pushnotis via backend när notiser är byggda.
+            Alert.alert('Snart!', 'Peppen skickas via pushnotiser när notiser är byggda.')
+          }
+          style={({ pressed }) => [
+            styles.cta,
+            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+          ]}>
+          <Text style={[styles.ctaText, { color: colors.onPrimary }]}>
+            Skicka en pepp till {rivalFirstName}
+          </Text>
+        </Pressable>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    marginTop: Spacing.five,
+  },
+  notFound: {
+    alignItems: 'center',
+    paddingVertical: Spacing.four,
+  },
+  inviteCard: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  inviteTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  inviteText: {
+    fontSize: 13,
+  },
+  inviteButtons: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  inviteButton: {
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  inviteButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
   leadBanner: {
     borderRadius: Radius.card,
     padding: Spacing.three,
@@ -191,9 +315,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
-  goalCard: {
-    gap: Spacing.two,
-  },
   milestones: {
     gap: Spacing.two + 2,
   },
@@ -218,6 +339,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
+  },
+  goalCard: {
+    gap: Spacing.two,
   },
   tag: {
     borderRadius: 999,

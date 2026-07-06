@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -7,6 +7,7 @@ import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { Eyebrow, Muted, Title } from '@/components/typography';
 import { Radius, Spacing } from '@/constants/theme';
+import { useChallenges } from '@/hooks/use-challenges';
 import { useFriends } from '@/hooks/use-friends';
 import { useTheme } from '@/hooks/use-theme';
 import { formatSteps } from '@/lib/format';
@@ -16,10 +17,29 @@ import { toPerson } from '@/lib/people';
 
 export default function UtmanaScreen() {
   const colors = useTheme();
+  const router = useRouter();
   const { live, friends: realFriends } = useFriends();
+  const { create } = useChallenges();
   const [kind, setKind] = useState<ChallengeKind>('most_steps');
   const [journeyId, setJourneyId] = useState<string>('mordor');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!live) {
+      Alert.alert('Demoläge', 'Logga in för att skapa utmaningar på riktigt.');
+      return;
+    }
+    setBusy(true);
+    const { id, error } = await create(kind, [...selected], kind === 'journey' ? journeyId : undefined);
+    setBusy(false);
+    if (error || !id) {
+      Alert.alert('Hoppsan', error ?? 'Kunde inte skapa utmaningen. Försök igen.');
+      return;
+    }
+    setSelected(new Set());
+    router.push({ pathname: '/utmaning/[id]', params: { id } });
+  };
 
   const friends: Person[] = live
     ? realFriends.map((friend, index) => toPerson(friend.id, friend.display_name, index))
@@ -145,16 +165,18 @@ export default function UtmanaScreen() {
 
       <Pressable
         accessibilityRole="button"
-        disabled={count === 0}
-        onPress={() =>
-          // TODO: skapa utmaningen i Supabase när backend är inkopplad.
-          Alert.alert('Snart!', 'Utmaningar kopplas till backend i nästa steg.')
-        }
+        disabled={count === 0 || busy}
+        onPress={submit}
         style={({ pressed }) => [
           styles.cta,
-          { backgroundColor: colors.accent, opacity: count === 0 ? 0.4 : pressed ? 0.85 : 1 },
+          {
+            backgroundColor: colors.accent,
+            opacity: count === 0 || busy ? 0.4 : pressed ? 0.85 : 1,
+          },
         ]}>
-        <Text style={[styles.ctaText, { color: colors.onAccent }]}>{ctaLabel}</Text>
+        <Text style={[styles.ctaText, { color: colors.onAccent }]}>
+          {busy ? 'Skapar utmaningen …' : ctaLabel}
+        </Text>
       </Pressable>
     </Screen>
   );
