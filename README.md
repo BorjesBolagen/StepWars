@@ -46,17 +46,26 @@ gratis konto räcker:
 
 ```bash
 npm install -g eas-cli
-eas login                # ditt Expo-konto
-eas init                 # kopplar projektet (skriver projectId till app.json)
-eas build --profile development --platform android
+eas login                # ditt Expo-konto (gratis)
+eas init                 # kopplar projektet (skriver projectId till app.json — committa!)
+
+# Supabase-nycklarna bakas in vid byggtillfället — ladda upp .env en gång:
+eas env:push preview --path .env
+
+# Fristående APK att installera och testa direkt på mobilen:
+eas build --profile preview --platform android
 ```
 
-Installera .apk-filen från bygglänken på telefonen och kör sedan
-`npx expo start` som vanligt — utvecklingsbygget ersätter Expo Go.
-För iOS: `--platform ios` (kräver Apple Developer-konto, 99 USD/år).
+Bygget körs i Expos moln (~10–15 min) och ger en länk/QR-kod — öppna den
+på telefonen, ladda ner .apk och installera (tillåt "okända appar").
 På Android behöver telefonen appen
 [Health Connect](https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata)
 (inbyggd i Android 14+).
+
+Vill du i stället iterera med hot reload: bygg `--profile development`
+en gång (kör även `eas env:push development --path .env`) och starta
+sedan `npx expo start` — utvecklingsbygget ersätter Expo Go.
+För iOS: `--platform ios` (kräver Apple Developer-konto, 99 USD/år).
 
 ## Projektstruktur
 
