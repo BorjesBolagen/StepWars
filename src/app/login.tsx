@@ -18,18 +18,21 @@ import { Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/use-theme';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'reset';
 
 export default function LoginScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
-  const { configured, session, signIn, signUp } = useAuth();
+  const { configured, session, signIn, signUp, requestPasswordReset, confirmPasswordReset } =
+    useAuth();
 
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [birthYear, setBirthYear] = useState('');
+  const [resetCodeSent, setResetCodeSent] = useState(false);
+  const [resetCode, setResetCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,6 +45,31 @@ export default function LoginScreen() {
   const submit = async () => {
     setError(null);
     setNotice(null);
+
+    if (mode === 'reset') {
+      if (!resetCodeSent) {
+        setBusy(true);
+        const message = await requestPasswordReset(email.trim());
+        setBusy(false);
+        if (message) {
+          setError(message);
+        } else {
+          setResetCodeSent(true);
+          setNotice('Kod skickad! Kolla din e-post och skriv in koden nedan.');
+        }
+        return;
+      }
+      if (password.length < 6) {
+        setError('Välj ett nytt lösenord med minst 6 tecken.');
+        return;
+      }
+      setBusy(true);
+      const message = await confirmPasswordReset(email.trim(), resetCode.trim(), password);
+      setBusy(false);
+      if (message) setError(message);
+      // Lyckad verifiering loggar in — Redirect ovanför tar över.
+      return;
+    }
 
     if (mode === 'signup') {
       const year = Number(birthYear);
@@ -95,7 +123,7 @@ export default function LoginScreen() {
 
           <Card style={styles.form}>
             <Text style={[styles.formTitle, { color: colors.text }]}>
-              {mode === 'signin' ? 'Logga in' : 'Skapa konto'}
+              {mode === 'signin' ? 'Logga in' : mode === 'signup' ? 'Skapa konto' : 'Nytt lösenord'}
             </Text>
 
             {mode === 'signup' && (
@@ -127,46 +155,89 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
+              editable={!(mode === 'reset' && resetCodeSent)}
               value={email}
               onChangeText={setEmail}
             />
-            <TextInput
-              style={field}
-              placeholder="Lösenord"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            {mode === 'reset' && resetCodeSent && (
+              <TextInput
+                style={field}
+                placeholder="Kod från mejlet"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                value={resetCode}
+                onChangeText={setResetCode}
+              />
+            )}
+            {(mode !== 'reset' || resetCodeSent) && (
+              <TextInput
+                style={field}
+                placeholder={mode === 'reset' ? 'Nytt lösenord' : 'Lösenord'}
+                placeholderTextColor={colors.textSecondary}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+            )}
 
             {error && <Text style={[styles.message, { color: colors.accent }]}>{error}</Text>}
             {notice && <Text style={[styles.message, { color: colors.primary }]}>{notice}</Text>}
 
             <Pressable
               accessibilityRole="button"
-              disabled={busy || !email || !password}
+              disabled={busy || !email || (mode !== 'reset' && !password)}
               onPress={submit}
               style={({ pressed }) => [
                 styles.cta,
                 {
                   backgroundColor: colors.accent,
-                  opacity: busy || !email || !password ? 0.5 : pressed ? 0.85 : 1,
+                  opacity:
+                    busy || !email || (mode !== 'reset' && !password) ? 0.5 : pressed ? 0.85 : 1,
                 },
               ]}>
               <Text style={[styles.ctaText, { color: colors.onAccent }]}>
-                {busy ? 'Ett ögonblick …' : mode === 'signin' ? 'Logga in' : 'Skapa konto'}
+                {busy
+                  ? 'Ett ögonblick …'
+                  : mode === 'signin'
+                    ? 'Logga in'
+                    : mode === 'signup'
+                      ? 'Skapa konto'
+                      : resetCodeSent
+                        ? 'Byt lösenord'
+                        : 'Skicka kod'}
               </Text>
             </Pressable>
+
+            {mode === 'signin' && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setMode('reset');
+                  setResetCodeSent(false);
+                  setResetCode('');
+                  setPassword('');
+                  setError(null);
+                  setNotice(null);
+                }}>
+                <Muted style={styles.switchMode}>Glömt lösenordet?</Muted>
+              </Pressable>
+            )}
 
             <Pressable
               accessibilityRole="button"
               onPress={() => {
                 setMode(mode === 'signin' ? 'signup' : 'signin');
+                setResetCodeSent(false);
+                setResetCode('');
                 setError(null);
                 setNotice(null);
               }}>
               <Muted style={styles.switchMode}>
-                {mode === 'signin' ? 'Ny här? Skapa ett konto' : 'Har du redan ett konto? Logga in'}
+                {mode === 'signin'
+                  ? 'Ny här? Skapa ett konto'
+                  : mode === 'signup'
+                    ? 'Har du redan ett konto? Logga in'
+                    : 'Tillbaka till inloggningen'}
               </Muted>
             </Pressable>
           </Card>

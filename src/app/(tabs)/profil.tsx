@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
@@ -16,8 +16,26 @@ import { ageGroupLabel, ageGroupOf, initialsOf } from '@/lib/people';
 
 export default function ProfilScreen() {
   const colors = useTheme();
-  const { configured, session, profile, signOut } = useAuth();
+  const { configured, session, profile, signOut, deleteAccount } = useAuth();
   const { live, friends, incoming } = useFriends();
+
+  const confirmDelete = () => {
+    Alert.alert(
+      'Radera kontot?',
+      'Ditt konto, dina steg, vänskaper och utmaningar raderas permanent. Det går inte att ångra.',
+      [
+        { text: 'Avbryt', style: 'cancel' },
+        {
+          text: 'Radera permanent',
+          style: 'destructive',
+          onPress: async () => {
+            const message = await deleteAccount();
+            if (message) Alert.alert('Hoppsan', message);
+          },
+        },
+      ],
+    );
+  };
 
   const name = profile?.display_name ?? 'Johan Börjesson';
   const ageGroup = profile ? ageGroupLabel(ageGroupOf(profile.birth_year)) : '35–44 år';
@@ -89,15 +107,20 @@ export default function ProfilScreen() {
       </Card>
 
       {session && (
-        <Pressable
-          accessibilityRole="button"
-          onPress={signOut}
-          style={({ pressed }) => [
-            styles.signOut,
-            { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-          ]}>
-          <Text style={[styles.signOutText, { color: colors.accent }]}>Logga ut</Text>
-        </Pressable>
+        <>
+          <Pressable
+            accessibilityRole="button"
+            onPress={signOut}
+            style={({ pressed }) => [
+              styles.signOut,
+              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}>
+            <Text style={[styles.signOutText, { color: colors.accent }]}>Logga ut</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={confirmDelete}>
+            <Muted style={styles.deleteAccount}>Radera kontot och all data</Muted>
+          </Pressable>
+        </>
       )}
     </Screen>
   );
@@ -153,5 +176,10 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  deleteAccount: {
+    textAlign: 'center',
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 });

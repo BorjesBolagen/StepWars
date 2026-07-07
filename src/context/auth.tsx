@@ -24,6 +24,16 @@ type AuthState = {
     birthYear: number,
   ) => Promise<string | null>;
   signOut: () => Promise<void>;
+  /** Skickar en återställningskod till e-postadressen. */
+  requestPasswordReset: (email: string) => Promise<string | null>;
+  /** Verifierar koden ur mejlet och sätter det nya lösenordet. */
+  confirmPasswordReset: (
+    email: string,
+    code: string,
+    newPassword: string,
+  ) => Promise<string | null>;
+  /** Raderar kontot och all dess data permanent (Google Play-krav). */
+  deleteAccount: () => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -102,9 +112,50 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await supabase?.auth.signOut();
   };
 
+  const requestPasswordReset: AuthState['requestPasswordReset'] = async (email) => {
+    if (!supabase) return 'Supabase är inte konfigurerat.';
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return error ? translateAuthError(error.message) : null;
+  };
+
+  const confirmPasswordReset: AuthState['confirmPasswordReset'] = async (
+    email,
+    code,
+    newPassword,
+  ) => {
+    if (!supabase) return 'Supabase är inte konfigurerat.';
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    if (error) {
+      return error.message.includes('expired') || error.message.includes('invalid')
+        ? 'Fel eller för gammal kod — begär en ny.'
+        : translateAuthError(error.message);
+    }
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    return updateError ? translateAuthError(updateError.message) : null;
+  };
+
+  const deleteAccount: AuthState['deleteAccount'] = async () => {
+    if (!supabase) return 'Supabase är inte konfigurerat.';
+    const { error } = await supabase.rpc('delete_account');
+    if (error) return error.message;
+    await supabase.auth.signOut();
+    return null;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ configured: isConfigured, loading, session, profile, signIn, signUp, signOut }}>
+      value={{
+        configured: isConfigured,
+        loading,
+        session,
+        profile,
+        signIn,
+        signUp,
+        signOut,
+        requestPasswordReset,
+        confirmPasswordReset,
+        deleteAccount,
+      }}>
       {children}
     </AuthContext.Provider>
   );
