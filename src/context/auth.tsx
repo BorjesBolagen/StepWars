@@ -6,6 +6,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { Platform } from 'react-native';
 
 import { isConfigured, supabase, type Profile } from '@/lib/supabase';
 
@@ -80,11 +81,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .then(({ data }) => {
         if (!cancelled) setProfile(data);
       });
-    // Dynamisk import: expo-notifications ska inte dras in vid statisk
-    // webbrendering — modulen laddas först på en riktig enhet.
-    import('@/lib/notifications').then(({ registerForPush }) => {
-      if (!cancelled) registerForPush(session.user.id);
-    });
+    // Dynamiska importer: nativa moduler ska inte dras in på webben
+    // eller vid statisk rendering — de laddas först på en riktig enhet.
+    if (Platform.OS !== 'web') {
+      import('@/lib/notifications').then(({ registerForPush }) => {
+        if (!cancelled) registerForPush(session.user.id);
+      });
+      import('@/lib/background-sync').then(({ registerBackgroundSync }) => {
+        if (!cancelled) registerBackgroundSync();
+      });
+    }
     return () => {
       cancelled = true;
     };

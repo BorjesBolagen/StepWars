@@ -107,6 +107,7 @@ aggregerat via vyn `leaderboard_weekly` — aldrig rådata per dag.
 - [x] Vinnaravgörande: pg_cron avgör utmaningar var 15:e minut, vinnaren visas i appen
 - [x] Pushnotiser via pg_net + Expo push: utmanad, vänförfrågan, accepterad vän, pepp, vinst
 - [x] Health Connect på Android + EAS-byggkonfiguration (kör `eas init` + `eas build`, se ovan)
+- [x] Play-krav: kontoradering i appen, lösenordsåterställning, integritetspolicy (sv/en), egen ikon + splash
+- [x] Bakgrundssynk av steg (~var 6:e timme i utvecklings-/produktionsbygge)
 - [ ] HealthKit på iOS (steg från Apple Watch — pedometern tar bara telefonens egna)
-- [ ] Bakgrundssynk av steg (idag synkas de när appen öppnas)
 - [ ] App-ikon, splash, TestFlight / intern testning
