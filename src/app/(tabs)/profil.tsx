@@ -105,6 +105,15 @@ export default function ProfilScreen() {
         <Text style={[styles.rowLabel, { color: colors.text }]}>Stega</Text>
         <Muted>v0.1</Muted>
       </Card>
+      <Link href="/integritet" asChild>
+        <Pressable accessibilityRole="button">
+          <Card style={styles.row}>
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Integritetspolicy</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Card>
+        </Pressable>
+      </Link>
 
       {session && (
         <>
