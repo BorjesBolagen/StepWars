@@ -8,7 +8,7 @@
     "scheme": "stega",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "se.borjesbolagen.stega",
       "infoPlist": {
         "NSMotionUsageDescription": "Stega läser dina steg från telefonens stegräknare för att räkna dem i tävlingar och utmaningar."
@@ -39,7 +39,7 @@
         {
           "backgroundColor": "#1E4D3B",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 128
         }
       ],
       "react-native-health-connect",
